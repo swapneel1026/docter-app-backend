@@ -17,12 +17,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(
   cors({
-    origin: "*",
+    origin: ["http://localhost:5173", "https://docter-app-client.vercel.app"],
     methods: ["*"],
     allowedHeaders: ["*"],
     exposedHeaders: ["Authorization"],
     credentials: true,
-    preflightContinue: true,
+    preflightContinue: false,
   })
 );
 app.use(cookieParser());
