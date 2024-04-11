@@ -16,12 +16,11 @@ dbConnect();
 app.use(express.json());
 app.use(
   cors({
-    origin: ["*"],
-    methods: ["*"],
-    allowedHeaders: ["*"],
-    exposedHeaders: ["*"],
+    origin: "*",
+    methods: "*",
+    allowedHeaders: "*",
+    exposedHeaders: "*",
     credentials: true,
-    preflightContinue: false,
   })
 );
 app.use(express.urlencoded({ extended: false }));
