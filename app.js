@@ -14,7 +14,6 @@ const port = process.env.PORT || 8000;
 
 dbConnect();
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 app.use(
   cors({
     origin: ["*"],
@@ -22,8 +21,10 @@ app.use(
     allowedHeaders: ["*"],
     exposedHeaders: ["*"],
     credentials: true,
+    preflightContinue: false,
   })
 );
+app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(verifyCookie("token"));
