@@ -38,17 +38,19 @@ router.post("/signin", async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email, password });
-    if (!user) {
-      return res.status(404).json({ msg: "User not found!" });
+    console.log(user, "user");
+    if (user === null) {
+      return res.status(404).json({ msg: "User not found!", user });
     }
     const userToken = createToken(user);
+    console.log(userToken, "usertoken");
     if (userToken !== false) {
       return res
         .cookie("token", userToken, {
-          expires: "2h",
-          secure: true,
-          sameSite: "none",
-          httpOnly: true,
+          // expires: "2h",
+          // secure: true,
+          // sameSite: "none",
+          // httpOnly: true,
         })
         .status(201)
         .json({ success: true, msg: "Successfully signed in!" });
@@ -56,7 +58,7 @@ router.post("/signin", async (req, res) => {
       return res.status(404).json({ msg: "Invalid username/passoword" });
     }
   } catch (error) {
-    return res.status(404).json({ msg: "User not found!!", error });
+    return res.send(error);
   }
 });
 export default router;
