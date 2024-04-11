@@ -24,7 +24,7 @@ const prodOrigins = [
 // console.log(allowedOrigins, "allowedOrigins");
 app.use(
   cors({
-    origin: "https://docter-app-client.vercel.app/",
+    origin: "https://docter-app-client.vercel.app",
     optionsSuccessStatus: 200,
     credentials: true,
   })
