@@ -27,6 +27,7 @@ app.use(
     origin: allowedOrigins,
     optionsSuccessStatus: 200,
     credentials: true,
+    preflightContinue: true,
   })
 );
 app.use(express.json());
