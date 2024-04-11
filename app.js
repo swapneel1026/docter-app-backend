@@ -23,14 +23,7 @@ const allowedOrigins =
   process.env.NODE_ENV === "production" ? prodOrigins : devOrigin;
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (allowedOrigins.includes(origin)) {
-        // console.log(origin, allowedOrigins);
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: allowedOrigins,
     optionsSuccessStatus: 200,
     credentials: true,
   })
