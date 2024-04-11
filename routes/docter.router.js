@@ -55,7 +55,12 @@ router.post("/signin", async (req, res) => {
     const docterToken = createToken(docter);
     if (docterToken !== false) {
       return res
-        .cookie("token", docterToken)
+        .cookie("token", docterToken, {
+          expires: "2h",
+          secure: true,
+          sameSite: "none",
+          httpOnly: true,
+        })
         .status(201)
         .json({ success: true, msg: "Successfully signed in!" });
     } else {
