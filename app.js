@@ -16,15 +16,13 @@ dbConnect();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(
-  cors(
-    cors({
-      origin: ["*"],
-      methods: ["*"],
-      allowedHeaders: ["*"],
-      exposedHeaders: ["Authorization"],
-      credentials: true,
-    })
-  )
+  cors({
+    origin: ["*"],
+    methods: ["*"],
+    allowedHeaders: ["*"],
+    exposedHeaders: ["Authorization"],
+    credentials: true,
+  })
 );
 app.use(cookieParser());
 app.use(bodyParser.json());
