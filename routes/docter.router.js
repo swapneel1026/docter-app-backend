@@ -49,7 +49,7 @@ router.post("/signin", async (req, res) => {
 
   try {
     const docter = await Docter.findOne({ email, password });
-    // console.log(docter, "doc");
+    console.log(docter, "doc");
     if (!docter) {
       return res.status(404).json({ msg: "Docter not found!" });
     }
@@ -57,10 +57,9 @@ router.post("/signin", async (req, res) => {
     if (docterToken !== false) {
       return res
         .cookie("token", docterToken, {
-          // expires: "2h",
-          // secure: true,
-          // sameSite: "none",
-          // httpOnly: true,
+          secure: true,
+          sameSite: "none",
+          httpOnly: true,
         })
         .status(201)
         .json({ success: true, msg: "Successfully signed in!" });

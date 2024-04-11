@@ -47,10 +47,9 @@ router.post("/signin", async (req, res) => {
     if (userToken !== false) {
       return res
         .cookie("token", userToken, {
-          // expires: "2h",
-          // secure: true,
-          // sameSite: "none",
-          // httpOnly: true,
+          secure: true,
+          sameSite: "none",
+          httpOnly: true,
         })
         .status(201)
         .json({ success: true, msg: "Successfully signed in!" });
@@ -58,7 +57,8 @@ router.post("/signin", async (req, res) => {
       return res.status(404).json({ msg: "Invalid username/passoword" });
     }
   } catch (error) {
-    return res.send(error);
+    console.log(error);
+    return res.status(500).json({ msg: "Kuch error hai", error });
   }
 });
 export default router;
