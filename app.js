@@ -13,16 +13,29 @@ const app = express();
 const port = process.env.PORT || 8000;
 
 dbConnect();
-app.use(express.json());
+const prodOrigins = [
+  process.env.ORIGIN_1,
+  process.env.ORIGIN_2,
+  process.env.ORIGIN_3,
+];
+const devOrigin = ["http://localhost:5173"];
+const allowedOrigins =
+  process.env.NODE_ENV === "production" ? prodOrigins : devOrigin;
 app.use(
   cors({
-    origin: "*",
-    methods: "*",
-    allowedHeaders: "*",
-    exposedHeaders: "*",
+    origin: (origin, callback) => {
+      if (allowedOrigins.includes(origin)) {
+        // console.log(origin, allowedOrigins);
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    optionsSuccessStatus: 200,
     credentials: true,
   })
 );
+app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(bodyParser.json());
