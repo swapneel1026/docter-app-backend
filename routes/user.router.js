@@ -44,7 +44,12 @@ router.post("/signin", async (req, res) => {
     const userToken = createToken(user);
     if (userToken !== false) {
       return res
-        .cookie("token", userToken, { expires: "2h" })
+        .cookie("token", userToken, {
+          expires: "2h",
+          secure: true,
+          sameSite: "none",
+          httpOnly: true,
+        })
         .status(201)
         .json({ success: true, msg: "Successfully signed in!" });
     } else {
