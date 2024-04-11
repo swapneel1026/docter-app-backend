@@ -21,6 +21,7 @@ const prodOrigins = [
 const devOrigin = ["http://localhost:5173"];
 const allowedOrigins =
   process.env.NODE_ENV === "production" ? prodOrigins : devOrigin;
+console.log(allowedOrigins, "allowedOrigins");
 app.use(
   cors({
     origin: allowedOrigins,
