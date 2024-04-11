@@ -50,7 +50,7 @@ router.post("/signin", async (req, res) => {
           secure: true,
           sameSite: "none",
           httpOnly: true,
-          maxAge: "120000",
+          maxAge: 120000,
         })
         .status(201)
         .json({ success: true, msg: "Successfully signed in!" });
