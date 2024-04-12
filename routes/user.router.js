@@ -38,28 +38,41 @@ router.post("/signin", async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email, password });
-    console.log(user, "user");
     if (user === null) {
       return res.status(404).json({ msg: "User not found!", user });
     }
     const userToken = createToken(user);
-    console.log(userToken, "usertoken");
     if (userToken !== false) {
       return res
         .cookie("token", userToken, {
           secure: true,
           sameSite: "none",
           httpOnly: true,
-          maxAge: 120000,
+          maxAge: 12000000,
         })
         .status(201)
-        .json({ success: true, msg: "Successfully signed in!" });
+        .json({
+          success: true,
+          msg: "Successfully signed in!",
+        });
     } else {
       return res.status(404).json({ msg: "Invalid username/passoword" });
     }
   } catch (error) {
     console.log(error);
     return res.status(500).json({ msg: "Kuch error hai", error });
+  }
+});
+
+router.get("/me", (req, res) => {
+  const cookieValue = req.cookies.token; // Assuming the cookie name is 'token'
+  // console.log(cookieValue);
+  if (cookieValue) {
+    res.status(200).json({ cookie: true, cookieValue });
+  } else {
+    res
+      .status(401)
+      .json({ cookie: false, cookieValue: null, msg: "No cookie found" });
   }
 });
 export default router;
