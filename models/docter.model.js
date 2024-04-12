@@ -34,7 +34,7 @@ const DocterSchema = new mongoose.Schema(
     },
     profileImage: {
       type: String,
-      required: true,
+      required: [true, "Please upload your picture"],
     },
     currentLivingState: {
       type: String,

@@ -19,6 +19,11 @@ router.post("/signup", upload.single("profileImage"), async (req, res) => {
     currentLivingCity,
   } = req.body;
   try {
+    if (!req.file) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Please upload a profile picture" });
+    }
     const response = await cloudinary.uploader.upload(`${req.file.path}`, {
       folder: "uploads/docter",
       allowed_formats: ["png,jpeg,jpg,webp"],
@@ -39,7 +44,9 @@ router.post("/signup", upload.single("profileImage"), async (req, res) => {
       .status(200)
       .json({ success: true, msg: "Successful signed up!" });
   } catch (err) {
-    return res.status(500).json({ success: false, error: err });
+    return res
+      .status(500)
+      .json({ success: false, error: err || "Internal Server Error" });
   }
 });
 

@@ -29,7 +29,7 @@ router.post("/signup", upload.single("profileImage"), async (req, res) => {
       .status(200)
       .json({ success: true, msg: "Successful signed up!" });
   } catch (error) {
-    return res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ success: false, error: error });
   }
 });
 
@@ -39,7 +39,9 @@ router.post("/signin", async (req, res) => {
   try {
     const user = await User.findOne({ email, password });
     if (user === null) {
-      return res.status(404).json({ msg: "User not found!", user });
+      return res
+        .status(404)
+        .json({ msg: "User not found! Check email/password", user });
     }
     const userToken = createToken(user);
     if (userToken !== false) {

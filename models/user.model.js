@@ -8,17 +8,17 @@ const UserSchema = new mongoose.Schema(
     },
     name: {
       type: String,
-      required: true,
+      required: [true, "Feild is required!"],
     },
     email: {
       type: String,
-      required: true,
+      required: [true, "Feild is required!"],
       unique: true,
-      index: true,
+      index: [true, "Email id already exists!"],
     },
     password: {
       type: String,
-      required: true,
+      required: [true, "Feild is required!"],
     },
     profileImage: {
       type: String,
