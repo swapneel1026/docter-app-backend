@@ -77,6 +77,60 @@ router.post("/signin", async (req, res) => {
     return res.send(error);
   }
 });
+// UPDATE DOCTER PROFILE
+router.post(
+  "/updateprofile",
+  upload.single("profileImage"),
+  async (req, res) => {
+    const { name, password, docterId } = req.body;
+    let url;
+    try {
+      let response;
+      if (req.file) {
+        response = await cloudinary.uploader.upload(req.file.path, {
+          folder: "uploads/docter",
+          allowed_formats: ["png,jpeg,jpg,webp"],
+          use_filename: true,
+          overwrite: true,
+        });
+      } else {
+        url = await Docter.findById(docterId).lean().select("profileImage");
+      }
+
+      let docter = await Docter.findByIdAndUpdate(docterId, {
+        name,
+        password,
+        profileImage: response?.url || url?.profileImage,
+      });
+
+      if (!docter)
+        res.status(400).json({ success: false, msg: "No docter Found" });
+      if (docter) {
+        let updatedDocter = await Docter.findById(docterId);
+        const docterToken = createToken(updatedDocter);
+
+        if (docterToken !== false) {
+          return res
+            .cookie("token", docterToken, {
+              secure: true,
+              sameSite: "none",
+              httpOnly: true,
+              maxAge: 12000000,
+            })
+            .status(201)
+            .json({
+              success: true,
+              msg: "Successfully Updated Profile!",
+              cookieValue: docterToken,
+            });
+        }
+      }
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ success: false, error: error });
+    }
+  }
+);
 // GET ALL DOCTERS LIST
 router.get("/getalldocter", async (req, res) => {
   try {
