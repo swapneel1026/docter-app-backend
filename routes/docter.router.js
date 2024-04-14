@@ -78,7 +78,7 @@ router.post("/signin", async (req, res) => {
   }
 });
 // UPDATE DOCTER PROFILE
-router.post(
+router.patch(
   "/updateprofile",
   upload.single("profileImage"),
   async (req, res) => {

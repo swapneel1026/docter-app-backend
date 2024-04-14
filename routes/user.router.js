@@ -65,7 +65,7 @@ router.post("/signin", async (req, res) => {
     return res.status(500).json({ msg: "Kuch error hai", error });
   }
 });
-router.post(
+router.patch(
   "/updateprofile",
   upload.single("profileImage"),
   async (req, res) => {
