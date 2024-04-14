@@ -70,7 +70,6 @@ router.post(
   upload.single("profileImage"),
   async (req, res) => {
     const { name, password, userId } = req.body;
-    console.log(userId, "uid");
     let url;
 
     try {
@@ -83,32 +82,44 @@ router.post(
           overwrite: true,
         });
       } else {
-        url = await User.findById(userId).lean().select("profileImage");
+        url = await User.findById(userId)
+          .lean()
+          .select("profileImage")
+          .select("password");
       }
+      if (!password) {
+        return res
+          .status(404)
+          .json({ success: false, msg: "Enter Password to confirm changes!" });
+      } else if (password != url?.password) {
+        return res
+          .status(401)
+          .json({ success: false, msg: "Incorrect Password, Try again!" });
+      } else {
+        let user = await User.findByIdAndUpdate(userId, {
+          name,
+          password,
+          profileImage: response?.url || url?.profileImage,
+        });
+        if (user) {
+          let updatedUser = await User.findById(userId);
+          const userToken = createToken(updatedUser);
 
-      let user = await User.findByIdAndUpdate(userId, {
-        name,
-        password,
-        profileImage: response?.url || url?.profileImage,
-      });
-      if (user) {
-        let updatedUser = await User.findById(userId);
-        const userToken = createToken(updatedUser);
-
-        if (userToken !== false) {
-          return res
-            .cookie("token", userToken, {
-              secure: true,
-              sameSite: "none",
-              httpOnly: true,
-              maxAge: 12000000,
-            })
-            .status(201)
-            .json({
-              success: true,
-              msg: "Successfully Updated Profile!",
-              cookieValue: userToken,
-            });
+          if (userToken !== false) {
+            return res
+              .cookie("token", userToken, {
+                secure: true,
+                sameSite: "none",
+                httpOnly: true,
+                maxAge: 12000000,
+              })
+              .status(201)
+              .json({
+                success: true,
+                msg: "Successfully Updated Profile!",
+                cookieValue: userToken,
+              });
+          }
         }
       }
     } catch (error) {

@@ -82,7 +82,15 @@ router.post(
   "/updateprofile",
   upload.single("profileImage"),
   async (req, res) => {
-    const { name, password, docterId } = req.body;
+    const {
+      name,
+      password,
+      specialization,
+      experience,
+      currentLivingCity,
+      currentLivingState,
+      docterId,
+    } = req.body;
     let url;
     try {
       let response;
@@ -94,35 +102,50 @@ router.post(
           overwrite: true,
         });
       } else {
-        url = await Docter.findById(docterId).lean().select("profileImage");
+        url = await Docter.findById(docterId)
+          .lean()
+          .select("profileImage")
+          .select("password");
       }
+      if (!password) {
+        return res
+          .status(401)
+          .json({ success: false, msg: "Enter Password to confirm changes!" });
+      } else if (password !== url?.password) {
+        return res
+          .status(401)
+          .json({ success: false, msg: "Incorrect Password, Try again!" });
+      } else {
+        let docter = await Docter.findByIdAndUpdate(docterId, {
+          name,
+          specialization,
+          experience,
+          currentLivingCity,
+          currentLivingState,
+          profileImage: response?.url || url?.profileImage,
+        });
 
-      let docter = await Docter.findByIdAndUpdate(docterId, {
-        name,
-        password,
-        profileImage: response?.url || url?.profileImage,
-      });
+        if (!docter)
+          res.status(400).json({ success: false, msg: "No docter Found" });
+        if (docter) {
+          let updatedDocter = await Docter.findById(docterId);
+          const docterToken = createToken(updatedDocter);
 
-      if (!docter)
-        res.status(400).json({ success: false, msg: "No docter Found" });
-      if (docter) {
-        let updatedDocter = await Docter.findById(docterId);
-        const docterToken = createToken(updatedDocter);
-
-        if (docterToken !== false) {
-          return res
-            .cookie("token", docterToken, {
-              secure: true,
-              sameSite: "none",
-              httpOnly: true,
-              maxAge: 12000000,
-            })
-            .status(201)
-            .json({
-              success: true,
-              msg: "Successfully Updated Profile!",
-              cookieValue: docterToken,
-            });
+          if (docterToken !== false) {
+            return res
+              .cookie("token", docterToken, {
+                secure: true,
+                sameSite: "none",
+                httpOnly: true,
+                maxAge: 12000000,
+              })
+              .status(201)
+              .json({
+                success: true,
+                msg: "Successfully Updated Profile!",
+                cookieValue: docterToken,
+              });
+          }
         }
       }
     } catch (error) {
