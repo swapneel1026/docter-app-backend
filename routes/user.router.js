@@ -70,9 +70,17 @@ router.post(
   upload.single("profileImage"),
   async (req, res) => {
     const { name, password, userId } = req.body;
-    let url;
+    let urlProfileImage;
+    let urlPassword;
 
     try {
+      if (!password) {
+        return res
+          .status(404)
+          .json({ success: false, msg: "Enter Password to confirm changes!" });
+      } else {
+        urlPassword = await User.findById(userId).lean().select("password");
+      }
       let response;
       if (req.file) {
         response = await cloudinary.uploader.upload(req.file.path, {
@@ -82,16 +90,11 @@ router.post(
           overwrite: true,
         });
       } else {
-        url = await User.findById(userId)
+        urlProfileImage = await User.findById(userId)
           .lean()
-          .select("profileImage")
-          .select("password");
+          .select("profileImage");
       }
-      if (!password) {
-        return res
-          .status(404)
-          .json({ success: false, msg: "Enter Password to confirm changes!" });
-      } else if (password != url?.password) {
+      if (password != urlPassword?.password) {
         return res
           .status(401)
           .json({ success: false, msg: "Incorrect Password, Try again!" });
@@ -99,7 +102,7 @@ router.post(
         let user = await User.findByIdAndUpdate(userId, {
           name,
           password,
-          profileImage: response?.url || url?.profileImage,
+          profileImage: response?.url || urlProfileImage?.profileImage,
         });
         if (user) {
           let updatedUser = await User.findById(userId);

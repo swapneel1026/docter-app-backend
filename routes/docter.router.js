@@ -91,8 +91,16 @@ router.post(
       currentLivingState,
       docterId,
     } = req.body;
-    let url;
+    let urlProfileImage;
+    let urlPassword;
     try {
+      if (!password) {
+        return res
+          .status(401)
+          .json({ success: false, msg: "Enter Password to confirm changes!" });
+      } else {
+        urlPassword = await Docter.findById(docterId).lean().select("password");
+      }
       let response;
       if (req.file) {
         response = await cloudinary.uploader.upload(req.file.path, {
@@ -102,16 +110,12 @@ router.post(
           overwrite: true,
         });
       } else {
-        url = await Docter.findById(docterId)
+        urlProfileImage = await Docter.findById(docterId)
           .lean()
-          .select("profileImage")
-          .select("password");
+          .select("profileImage");
       }
-      if (!password) {
-        return res
-          .status(401)
-          .json({ success: false, msg: "Enter Password to confirm changes!" });
-      } else if (password !== url?.password) {
+
+      if (password !== urlPassword?.password) {
         return res
           .status(401)
           .json({ success: false, msg: "Incorrect Password, Try again!" });
@@ -122,7 +126,7 @@ router.post(
           experience,
           currentLivingCity,
           currentLivingState,
-          profileImage: response?.url || url?.profileImage,
+          profileImage: response?.url || urlProfileImage?.profileImage,
         });
 
         if (!docter)
