@@ -3,62 +3,111 @@ import Docter from "../models/docter.model.js";
 import { createToken } from "../helpers/authentication.js";
 import { upload } from "../middlewares/multer.js";
 import cloudinary from "../helpers/cloudinary.js";
+import createHashPassword from "../helpers/PasswordEncrypter.js";
 
 const router = Router();
 
 // DOCTER SIGNUP
-router.post("/signup", upload.single("profileImage"), async (req, res) => {
-  const {
-    name,
-    email,
-    password,
-    specialization,
-    docsImage,
-    experience,
-    currentLivingState,
-    currentLivingCity,
-  } = req.body;
-  try {
-    if (!req.file) {
-      return res
-        .status(400)
-        .json({ success: false, error: "Please upload a profile picture" });
-    }
-    const response = await cloudinary.uploader.upload(`${req.file.path}`, {
-      folder: "uploads/docter",
-      allowed_formats: ["png,jpeg,jpg,webp"],
-      use_filename: true,
-    });
-    await Docter.create({
+router.post(
+  "/signup",
+  upload.fields([
+    { name: "docsImage", maxCount: 1 },
+    { name: "profileImage", maxCount: 1 },
+  ]),
+  async (req, res) => {
+    const {
       name,
       email,
       password,
       specialization,
-      docsImage,
-      profileImage: response?.url,
       experience,
       currentLivingState,
       currentLivingCity,
-    });
-    return res
-      .status(200)
-      .json({ success: true, msg: "Successful signed up!" });
-  } catch (err) {
-    return res
-      .status(500)
-      .json({ success: false, error: err || "Internal Server Error" });
+    } = req.body;
+
+    try {
+      const hashedPassword = createHashPassword(password);
+      if (
+        !req.files ||
+        !req.files["profileImage"] ||
+        req.files["profileImage"].length === 0
+      ) {
+        return res
+          .status(400)
+          .json({ success: false, error: "Please upload a profile picture" });
+      }
+
+      const profileImage = req.files["profileImage"]?.[0];
+      const docsImage = req.files["docsImage"]?.[0];
+      let docsImageResponse;
+      let profileImageResponse;
+
+      if (profileImage !== undefined) {
+        profileImageResponse = await cloudinary.uploader.upload(
+          `${profileImage?.path}`,
+          {
+            folder: "uploads/docter",
+            allowed_formats: ["png,jpeg,jpg,webp"],
+            use_filename: true,
+          }
+        );
+      } else {
+        res
+          .status(404)
+          .json({ success: false, msg: "Please upload profile pic!!!" });
+      }
+
+      if (docsImage !== undefined) {
+        docsImageResponse = await cloudinary.uploader.upload(
+          `${docsImage?.path}`,
+          {
+            folder: "uploads/docter/docs",
+            allowed_formats: ["png,jpeg,jpg,webp,pdf"],
+            use_filename: true,
+          }
+        );
+      }
+
+      await Docter.create({
+        name,
+        email,
+        password: hashedPassword,
+        specialization,
+        docsImage: docsImageResponse?.url || "",
+        profileImage: profileImageResponse?.url || "",
+        experience,
+
+        currentLivingState,
+        currentLivingCity,
+      });
+      return res
+        .status(200)
+        .json({ success: true, msg: "Successful signed up!" });
+    } catch (err) {
+      console.log(err);
+      return res
+        .status(500)
+        .json({ success: false, error: err || "Internal Server Error" });
+    }
   }
-});
+);
 
 // DOCTER SIGNIN
 router.post("/signin", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const docter = await Docter.findOne({ email, password });
-    console.log(docter, "doc");
+    const docterHashedPassword = createHashPassword(password);
+    const docter = await Docter.findOne({ email });
+
     if (!docter) {
-      return res.status(404).json({ msg: "Docter not found!" });
+      return res.status(404).json({ msg: "Docter not found! Check Email Id!" });
+    }
+    const docterPassword = await Docter.findOne({ email }).select("password");
+    if (docterHashedPassword !== docterPassword) {
+      return res
+        .status(401)
+        .json({ success: false, msg: "Invalid Email/Password!" });
     }
     const docterToken = createToken(docter);
     if (docterToken !== false) {

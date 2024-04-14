@@ -3,6 +3,7 @@ import User from "../models/user.model.js";
 import { createToken } from "../helpers/authentication.js";
 import { upload } from "../middlewares/multer.js";
 import cloudinary from "../helpers/cloudinary.js";
+import createHashPassword from "../helpers/PasswordEncrypter.js";
 
 const router = Router();
 
@@ -10,6 +11,7 @@ const router = Router();
 router.post("/signup", upload.single("profileImage"), async (req, res) => {
   const { name, email, password } = req.body;
   try {
+    const hashedPassword = createHashPassword(password);
     let response;
     if (req.file) {
       response = await cloudinary.uploader.upload(req.file.path, {
@@ -22,7 +24,7 @@ router.post("/signup", upload.single("profileImage"), async (req, res) => {
     await User.create({
       name,
       email,
-      password,
+      password: hashedPassword,
       profileImage: response?.url || "",
     });
     return res
@@ -36,12 +38,19 @@ router.post("/signup", upload.single("profileImage"), async (req, res) => {
 // USER SIGNIN
 router.post("/signin", async (req, res) => {
   const { email, password } = req.body;
+  const userHashedPassword = createHashPassword(password);
   try {
-    const user = await User.findOne({ email, password });
+    const user = await User.findOne({ email });
     if (user === null) {
       return res
         .status(404)
-        .json({ msg: "User not found! Check email/password", user });
+        .json({ msg: "User not found! Check Email Id!", user });
+    }
+    const userPassword = await User.findOne({ email }).select("password");
+    if (userHashedPassword !== userPassword?.password) {
+      return res
+        .status(401)
+        .json({ success: false, msg: "Invalid Email/Password!" });
     }
     const userToken = createToken(user);
     if (userToken !== false) {
@@ -133,7 +142,6 @@ router.patch(
 
 router.get("/me", (req, res) => {
   const cookieValue = req.cookies.token;
-  console.log(cookieValue);
   if (cookieValue) {
     res.status(200).json({ cookie: true, cookieValue });
   } else {
@@ -142,4 +150,5 @@ router.get("/me", (req, res) => {
       .json({ cookie: false, cookieValue: null, msg: "No cookie found" });
   }
 });
+
 export default router;
