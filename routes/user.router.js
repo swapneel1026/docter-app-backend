@@ -140,6 +140,55 @@ router.patch(
   }
 );
 
+// UPDATE USER PASSWORD
+router.patch("/updatepassword", async (req, res) => {
+  const { password, newPassword, userId } = req.body;
+  try {
+    if (!userId) {
+      return res
+        .status(400)
+        .json({ success: false, msg: "Login and try again!" });
+    }
+    if (password === newPassword) {
+      return res
+        .status(406)
+        .json({ success: false, msg: "Old and new password cant be same." });
+    }
+    const previousPassword = await User.findById(userId)
+      .select("password")
+      .select("_id");
+
+    if (!previousPassword) {
+      return res
+        .status(400)
+        .json({ success: false, msg: "User doesnt exist !" });
+    }
+
+    if (previousPassword && !previousPassword?.password) {
+      return res
+        .status(400)
+        .json({ success: false, msg: "Login and try again!" });
+    }
+    const hashedPassword = createHashPassword(password);
+    const newHashedPassword = createHashPassword(newPassword);
+    if (hashedPassword !== previousPassword?.password) {
+      return res
+        .status(400)
+        .json({ success: false, msg: "Password mismatch!" });
+    }
+    const passwordUpdate = await User.findByIdAndUpdate(userId, {
+      password: newHashedPassword,
+    });
+    if (passwordUpdate) {
+      return res
+        .status(202)
+        .json({ success: true, msg: "Password Succesfully changed!" });
+    }
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 router.get("/me", (req, res) => {
   const cookieValue = req.cookies.token;
   if (cookieValue) {

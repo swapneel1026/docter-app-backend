@@ -104,7 +104,7 @@ router.post("/signin", async (req, res) => {
       return res.status(404).json({ msg: "Docter not found! Check Email Id!" });
     }
     const docterPassword = await Docter.findOne({ email }).select("password");
-    if (docterHashedPassword !== docterPassword) {
+    if (docterHashedPassword !== docterPassword?.password) {
       return res
         .status(401)
         .json({ success: false, msg: "Invalid Email/Password!" });
@@ -207,6 +207,56 @@ router.patch(
     }
   }
 );
+
+// UPDATE DOCTER PASSWORD
+router.patch("/updatepassword", async (req, res) => {
+  const { password, newPassword, docterId } = req.body;
+  try {
+    if (!docterId) {
+      return res
+        .status(400)
+        .json({ success: false, msg: "Login and try again!" });
+    }
+    if (password === newPassword) {
+      return res
+        .status(406)
+        .json({ success: false, msg: "Old and new password cant be same." });
+    }
+    const previousPassword = await Docter.findById(docterId)
+      .select("password")
+      .select("_id");
+
+    if (!previousPassword) {
+      return res
+        .status(400)
+        .json({ success: false, msg: "User doesnt exist !" });
+    }
+
+    if (previousPassword && !previousPassword?.password) {
+      return res
+        .status(400)
+        .json({ success: false, msg: "Login and try again!" });
+    }
+    const hashedPassword = createHashPassword(password);
+    const newHashedPassword = createHashPassword(newPassword);
+
+    if (hashedPassword !== previousPassword?.password) {
+      return res
+        .status(400)
+        .json({ success: false, msg: "Password mismatch!" });
+    }
+    const passwordUpdate = await Docter.findByIdAndUpdate(docterId, {
+      password: newHashedPassword,
+    });
+    if (passwordUpdate) {
+      return res
+        .status(202)
+        .json({ success: true, msg: "Password Succesfully changed!" });
+    }
+  } catch (error) {
+    console.log(error);
+  }
+});
 // GET ALL DOCTERS LIST
 router.get("/getalldocter", async (req, res) => {
   try {
