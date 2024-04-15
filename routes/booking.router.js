@@ -99,5 +99,27 @@ router.patch("/updatestatus/:bookingId", async (req, res) => {
     res.send(error);
   }
 });
+// BOOKING DELETE BY USER
+router.delete("/deletebooking", async (req, res) => {
+  const { bookingId } = req.body;
+  if (!bookingId) {
+    return res
+      .status(400)
+      .json({ success: false, msg: "Booking Id not found" });
+  }
+  try {
+    const deleteBooking = await Booking.findByIdAndDelete(bookingId);
+    if (!deleteBooking) {
+      res.status(404).json({ success: false, msg: "No bookings found" });
+    } else {
+      res
+        .status(200)
+        .json({ success: true, msg: "Successfully deleted Booking!" });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, msg: error });
+  }
+});
 
 export default router;
