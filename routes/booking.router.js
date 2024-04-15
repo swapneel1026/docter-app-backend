@@ -1,39 +1,52 @@
 import { Router } from "express";
-
 import Booking from "../models/bookappointment.model.js";
+import { upload } from "../middlewares/multer.js";
+import cloudinary from "../helpers/cloudinary.js";
 
 const router = Router();
 
 // CREATEBOOKING
-router.post("/bookappointment", async (req, res) => {
-  const {
-    dateOfBooking,
-    docter,
-    bookedBy,
-    reasonOfBooking,
-    previousPrescriptionImage,
-    patientName,
-    patientAge,
-    refferedByDocter,
-  } = req.body;
-
-  try {
-    await Booking.create({
+router.post(
+  "/bookappointment",
+  upload.single("previousPrescriptionImage"),
+  async (req, res) => {
+    const {
       dateOfBooking,
       docter,
       bookedBy,
       reasonOfBooking,
-      previousPrescriptionImage,
       patientName,
       patientAge,
       refferedByDocter,
-    });
+    } = req.body;
 
-    return res.status(200).json({ success: true, msg: "Booking Confirmed" });
-  } catch (error) {
-    res.send(error);
+    try {
+      let response;
+      if (req.file) {
+        response = await cloudinary.uploader.upload(req.file.path, {
+          folder: "uploads/user/previousprescription",
+          use_filename: true,
+          overwrite: true,
+          allowedFormats: ["jpg", "png", "pdf"],
+        });
+      }
+      await Booking.create({
+        dateOfBooking,
+        docter,
+        bookedBy,
+        reasonOfBooking,
+        previousPrescriptionImage: response?.url || "",
+        patientName,
+        patientAge,
+        refferedByDocter,
+      });
+
+      return res.status(200).json({ success: true, msg: "Booking Confirmed" });
+    } catch (error) {
+      res.send(error);
+    }
   }
-});
+);
 // FINDBOOKINGBYID
 router.get("/bookingdetail/:bookingId", async (req, res) => {
   const { bookingId } = req.params;
