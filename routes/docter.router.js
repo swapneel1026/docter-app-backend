@@ -142,8 +142,9 @@ router.patch(
     } = req.body;
     let urlProfileImage;
     let urlPassword;
+    const hashedUrlpassword = createHashPassword(password);
     try {
-      if (!password) {
+      if (!hashedUrlpassword) {
         return res
           .status(401)
           .json({ success: false, msg: "Enter Password to confirm changes!" });
@@ -164,7 +165,7 @@ router.patch(
           .select("profileImage");
       }
 
-      if (password !== urlPassword?.password) {
+      if (hashedUrlpassword !== urlPassword?.password) {
         return res
           .status(401)
           .json({ success: false, msg: "Incorrect Password, Try again!" });

@@ -81,9 +81,10 @@ router.patch(
     const { name, password, userId } = req.body;
     let urlProfileImage;
     let urlPassword;
+    const hashedPassword = createHashPassword(password);
 
     try {
-      if (!password) {
+      if (!hashedPassword) {
         return res
           .status(404)
           .json({ success: false, msg: "Enter Password to confirm changes!" });
@@ -103,14 +104,13 @@ router.patch(
           .lean()
           .select("profileImage");
       }
-      if (password != urlPassword?.password) {
+      if (hashedPassword != urlPassword?.password) {
         return res
           .status(401)
           .json({ success: false, msg: "Incorrect Password, Try again!" });
       } else {
         let user = await User.findByIdAndUpdate(userId, {
           name,
-          password,
           profileImage: response?.url || urlProfileImage?.profileImage,
         });
         if (user) {
