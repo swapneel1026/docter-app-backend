@@ -210,9 +210,9 @@ router.patch(
 
 // UPDATE DOCTER PASSWORD
 router.patch("/updatepassword", async (req, res) => {
-  const { password, newPassword, docterId } = req.body;
+  const { password, newPassword, Id } = req.body;
   try {
-    if (!docterId) {
+    if (!Id) {
       return res
         .status(400)
         .json({ success: false, msg: "Login and try again!" });
@@ -222,7 +222,7 @@ router.patch("/updatepassword", async (req, res) => {
         .status(406)
         .json({ success: false, msg: "Old and new password cant be same." });
     }
-    const previousPassword = await Docter.findById(docterId)
+    const previousPassword = await Docter.findById(Id)
       .select("password")
       .select("_id");
 
@@ -243,9 +243,9 @@ router.patch("/updatepassword", async (req, res) => {
     if (hashedPassword !== previousPassword?.password) {
       return res
         .status(400)
-        .json({ success: false, msg: "Password mismatch!" });
+        .json({ success: false, msg: "Incorrect old password!" });
     }
-    const passwordUpdate = await Docter.findByIdAndUpdate(docterId, {
+    const passwordUpdate = await Docter.findByIdAndUpdate(Id, {
       password: newHashedPassword,
     });
     if (passwordUpdate) {
