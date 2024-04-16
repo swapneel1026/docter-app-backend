@@ -56,7 +56,7 @@ router.get("/bookingdetail/:bookingId", async (req, res) => {
     .populate("docter", "name email specialization")
     .lean();
   if (!bookingDetails) return res.status(404).json({ msg: "No booking found" });
-  return res.send(bookingDetails);
+  return res.status(200).json({ bookingDetails });
 });
 // FINDBOOKINGBYDOCTERID
 router.get("/findbookingdocter/:docterId", async (req, res) => {
@@ -75,9 +75,10 @@ router.get("/findbookingdocter/:docterId", async (req, res) => {
 router.get("/findbookinguser/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
-    const appointmentList = await Booking.find({ bookedBy: userId }).populate(
-      "docter"
-    );
+    const appointmentList = await Booking.find({ bookedBy: userId })
+      .populate("bookedBy", "name email")
+      .populate("docter", "name specialization userType");
+
     return res.status(200).json({ data: appointmentList });
   } catch (error) {
     return res.send(error);
