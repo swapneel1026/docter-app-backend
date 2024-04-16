@@ -2,6 +2,7 @@ import { Router } from "express";
 import Booking from "../models/bookappointment.model.js";
 import { upload } from "../middlewares/multer.js";
 import cloudinary from "../helpers/cloudinary.js";
+import { extractFilenameFromUrl } from "../helpers/extracFilenameFromUrl.js";
 
 const router = Router();
 
@@ -24,7 +25,7 @@ router.post(
       let response;
       if (req.file) {
         response = await cloudinary.uploader.upload(req.file.path, {
-          folder: "uploads/user/previousprescription",
+          folder: `uploads/user/previousprescription/${bookedBy}/${patientName}`,
           use_filename: true,
           overwrite: true,
           allowedFormats: ["jpg", "png", "pdf"],
@@ -109,12 +110,25 @@ router.delete("/deletebooking", async (req, res) => {
   }
   try {
     const deleteBooking = await Booking.findByIdAndDelete(bookingId);
+    let extractedFilename;
+    let deleteRes;
+    extractedFilename = extractFilenameFromUrl(
+      deleteBooking?.previousPrescriptionImage
+    );
     if (!deleteBooking) {
       res.status(404).json({ success: false, msg: "No bookings found" });
     } else {
-      res
-        .status(200)
-        .json({ success: true, msg: "Successfully deleted Booking!" });
+      if (deleteBooking?.previousPrescriptionImage) {
+        deleteRes = await cloudinary.uploader.destroy(
+          `uploads/user/previousprescription/${deleteBooking?.bookedBy}/${deleteBooking?.patientName}/${extractedFilename}`
+        );
+      }
+
+      res.status(200).json({
+        success: true,
+        msg: "Successfully deleted Booking!",
+        cloudinaryDelete: deleteRes.result,
+      });
     }
   } catch (error) {
     console.log(error);
