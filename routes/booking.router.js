@@ -122,13 +122,17 @@ router.delete("/deletebooking", async (req, res) => {
         deleteRes = await cloudinary.uploader.destroy(
           `uploads/user/previousprescription/${deleteBooking?.bookedBy}/${deleteBooking?.patientName}/${extractedFilename}`
         );
+        res.status(200).json({
+          success: true,
+          msg: "Successfully deleted Booking!",
+          cloudinaryDelete: deleteRes?.result,
+        });
+      } else {
+        res.status(200).json({
+          success: true,
+          msg: "Successfully deleted Booking!",
+        });
       }
-
-      res.status(200).json({
-        success: true,
-        msg: "Successfully deleted Booking!",
-        cloudinaryDelete: deleteRes.result,
-      });
     }
   } catch (error) {
     console.log(error);
