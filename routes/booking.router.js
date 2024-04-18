@@ -101,6 +101,28 @@ router.patch("/updatestatus/:bookingId", async (req, res) => {
     res.send(error);
   }
 });
+// BOOKING TIME UPDATE
+router.patch("/updatetiming/:bookingId", async (req, res) => {
+  const { bookingId } = req.params;
+  const { dateOfBooking } = req.body;
+  if (!bookingId)
+    return res.status(404).json({ succes: false, msg: "Booking not found" });
+  if (!dateOfBooking) {
+    return res
+      .status(400)
+      .json({ succes: false, msg: "New date not provided!" });
+  }
+  try {
+    const newDate = await Booking.findByIdAndUpdate(bookingId, {
+      dateOfBooking,
+    });
+    if (newDate) {
+      return res
+        .status(200)
+        .json({ success: true, msg: "Booking time updated Successfully!" });
+    }
+  } catch (error) {}
+});
 // BOOKING DELETE BY USER
 router.delete("/deletebooking", async (req, res) => {
   const { bookingId } = req.body;
