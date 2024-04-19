@@ -9,11 +9,9 @@ import booking from "./routes/booking.router.js";
 import cookieParser from "cookie-parser";
 import { verifyCookie } from "./helpers/AuthVerifyToken.js";
 import Docter from "./models/docter.model.js";
+import { createServer } from "http";
+import { Server } from "socket.io";
 
-const app = express();
-const port = process.env.PORT || 8000;
-
-dbConnect();
 const prodOrigins = [
   process.env.ORIGIN_1,
   process.env.ORIGIN_2,
@@ -23,6 +21,17 @@ const devOrigin = "http://localhost:5173";
 const allowedOrigins =
   process.env.NODE_ENV === "production" ? prodOrigins : devOrigin;
 console.log(allowedOrigins, "allowedOrigins");
+
+const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: allowedOrigins,
+  },
+});
+const port = process.env.PORT || 8000;
+
+dbConnect();
 app.use(
   cors({
     origin: allowedOrigins,
@@ -40,6 +49,50 @@ const verifyToken = (req, res, next) => {
   verifyCookie("token")(req, res, next);
 };
 
+// SocketIO
+let onlineUsers = [];
+
+const addNewUser = (userId, socketId) => {
+  !onlineUsers.some((user) => user.userId === userId) &&
+    onlineUsers.push({ userId, socketId });
+};
+
+const removeUser = (socketId) => {
+  onlineUsers = onlineUsers.filter((user) => user.socketId !== socketId);
+};
+
+const getUser = (userId) => {
+  return onlineUsers?.find((user) => user.userId === userId);
+};
+
+io.on("connection", (socket) => {
+  socket.on("newUser", (userId) => {
+    addNewUser(userId, socket.id);
+  });
+
+  socket.on(
+    "sendNotification",
+    ({
+      previousBookingStatus,
+      newBookingStatus,
+      senderId,
+      bookingDate,
+      docter,
+    }) => {
+      const reciever = getUser(senderId);
+      io.to(reciever?.socketId).emit("getNotification", {
+        senderId,
+        previousBookingStatus,
+        newBookingStatus,
+        bookingDate,
+        docter,
+      });
+    }
+  );
+  socket.on("disconnect", () => {
+    removeUser(socket.id);
+  });
+});
 // User
 app.use("/api/user", verifyToken, user);
 // Docter
@@ -59,6 +112,6 @@ app.get("/healthcheck", async (req, res) => {
 
 // Booking Status update by Docter
 
-app.listen(port, () => {
+httpServer.listen(port, () => {
   console.log(`Server running on port:${port} `);
 });
